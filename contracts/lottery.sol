@@ -5,6 +5,7 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 
 error lottery__NotEnoughETH();
+error lottery__transferFailed();
 
 contract lottery is VRFConsumerBaseV2 {
     // state variables
@@ -17,8 +18,13 @@ contract lottery is VRFConsumerBaseV2 {
     uint16 private constant NUM_WORDS = 1;
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
 
+    // Lottery variables
+    address private s_Winner;
+
     // Events
     event LotteryEnter(address indexed player);
+    event RequestedLotteryWinner(uint256 indexed requestId);
+    event WinnerSelected(address indexed winner);
 
     constructor(
         address vrfCoordinatorV2,
@@ -49,12 +55,19 @@ contract lottery is VRFConsumerBaseV2 {
             i_callbackGasLimit,
             NUM_WORDS
         );
+        emit RequestedLotteryWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
-        internal
-        override
-    {}
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+        uint256 WinnerIndex = randomWords[0] % s_players.length;
+        address payable WinnerAddress = s_players[WinnerIndex];
+        s_Winner = WinnerAddress;
+
+        (bool success, ) = WinnerAddress.call{value: address(this).balance}("");
+        if (!success) revert lottery__transferFailed();
+
+        emit WinnerSelected(WinnerAddress);
+    }
 
     function getEntranceFee() public view returns (uint256) {
         return i_minFee;
@@ -62,5 +75,9 @@ contract lottery is VRFConsumerBaseV2 {
 
     function getPlayers(uint256 index) public view returns (address) {
         return s_players[index];
+    }
+
+    function getWinner() public view returns (address) {
+        return s_Winner;
     }
 }
