@@ -11,7 +11,7 @@ contract lottery is VRFConsumerBaseV2 {
     // state variables
     uint256 private immutable i_minFee;
     address payable[] private s_players;
-    bytes32 private immutable i_keyhash;
+    bytes32 private immutable i_keyHash;
     uint32 private immutable i_subscriptionId;
     uint16 private constant REQUEST_CONFIRMATION = 3;
     uint32 private immutable i_callbackGasLimit;
@@ -29,13 +29,13 @@ contract lottery is VRFConsumerBaseV2 {
     constructor(
         address vrfCoordinatorV2,
         uint256 minFee,
-        bytes32 keyhash,
+        bytes32 keyHash,
         uint32 subscriptionId,
         uint32 callbackGasLimit
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
         i_minFee = minFee;
-        i_keyhash = keyhash;
+        i_keyHash = keyHash;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
     }
@@ -49,7 +49,7 @@ contract lottery is VRFConsumerBaseV2 {
 
     function requestRandomWinner() external {
         uint256 requestId = i_vrfCoordinator.requestRandomWords(
-            i_keyhash,
+            i_keyHash,
             i_subscriptionId,
             REQUEST_CONFIRMATION,
             i_callbackGasLimit,
@@ -62,6 +62,7 @@ contract lottery is VRFConsumerBaseV2 {
         uint256 WinnerIndex = randomWords[0] % s_players.length;
         address payable WinnerAddress = s_players[WinnerIndex];
         s_Winner = WinnerAddress;
+        s_players = new address payable[](0);
 
         (bool success, ) = WinnerAddress.call{value: address(this).balance}("");
         if (!success) revert lottery__transferFailed();
