@@ -1,7 +1,8 @@
 const { network, ethers } = require("hardhat")
-const { networkConfig } = require("../helper-hardhat-config")
+const { networkConfig } = require("../helper-hardhat-config.js")
+const { verify } = require("../utils/verify.js")
 
-module.export = async function ({ getNamedAccounts, deployments }) {
+module.exports = async function ({ getNamedAccounts, deployments }) {
     const { deploy, log } = deployments
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
@@ -14,8 +15,24 @@ module.export = async function ({ getNamedAccounts, deployments }) {
 
     const lottery = await deploy("lottery", {
         from: deployer,
-        args: [vrfCoordinatorV2, keyHash, minFee, subscriptionId, callbackGasLimit],
+        args: [vrfCoordinatorV2, minFee, keyHash, subscriptionId, callbackGasLimit],
         log: true,
-        waitConfirmations: network.config.blockCofirmations || 1,
+        waitConfirmations: network.config.blockCofirmations,
     })
+
+    if (process.env.ETHERSCAN_API_KEY) {
+        log("The contrcat is being verified on Rinkeby network.....")
+        await verify(lottery.address, [
+            vrfCoordinatorV2,
+            minFee,
+            keyHash,
+            subscriptionId,
+            callbackGasLimit,
+        ])
+        log("verified!")
+    }
+
+    log("============================================================")
 }
+
+module.exports.tags = ["all", "lottery"]

@@ -1,5 +1,3 @@
-const { hardhatArguments } = require("hardhat")
-
 require("@nomiclabs/hardhat-waffle")
 require("@nomiclabs/hardhat-etherscan")
 require("hardhat-deploy")
@@ -29,10 +27,23 @@ module.exports = {
             accounts: [process.env.PRIVATE_KEY],
             chainId: 5,
             saveDeployments: true,
-            blockConfirmations: 6,
+            blockConfirmations: 3,
+        },
+
+        rinkeby: {
+            url: process.env.RINKEBY_RPC_URL,
+            accounts: [process.env.PRIVATE_KEY],
+            chainId: 4,
+            saveDeployments: true,
+            blockConfirmations: 3,
         },
     },
 
+    etherscan: {
+        apiKey: {
+            rinkeby: process.env.ETHERSCAN_API_KEY,
+        },
+    },
     namedAccounts: {
         deployer: {
             default: 0,

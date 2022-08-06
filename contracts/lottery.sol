@@ -43,7 +43,6 @@ contract lottery is VRFConsumerBaseV2 {
     function enterLottery() public payable {
         if (msg.value < i_minFee) revert lottery__NotEnoughETH();
         s_players.push(payable(msg.sender));
-
         emit LotteryEnter(msg.sender);
     }
 
